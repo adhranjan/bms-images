@@ -1,0 +1,152 @@
+services:
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+
+  zookeeper:
+    image: zookeeper:3.7
+    ports:
+      - "2181:2181"
+    healthcheck:
+      test: ["CMD", "echo", "ruok", "|", "nc", "-w", "2", "localhost", "2181"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  kafka:
+    image: wurstmeister/kafka:2.13-2.8.1
+    ports:
+      - "9092:9092"
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    container_name: rabbitmq
+    hostname: 'mabbit'
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    ports:
+      - "8080:8080"  # Web UI for Jenkins
+      - "50000:50000" # For Jenkins agents
+    volumes:
+      - jenkins_data:/var/jenkins_home
+    environment:
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false  # Skip the initial setup wizard
+
+  mysql-workbench:
+    image: lscr.io/linuxserver/mysql-workbench:latest
+    container_name: mysql-workbench
+    cap_add:
+      - IPC_LOCK
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+      - mysql_workbench_data:/config
+    ports:
+      - 7000:3000
+      - 7001:3001
+    networks:
+      - app_network
+
+  mysql-client:
+    image: mysql:8.0
+    container_name: mysql-client
+    entrypoint: tail -f /dev/null   # Keep container running
+    stdin_open: true
+    tty: true
+    profiles: ["manual"]            # Only start when needed
+    networks:
+      - app_network
+      
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: mailpit
+    ports:
+      - "1025:1025"   # SMTP port
+      - "8025:8025"   # Web UI port
+    volumes:
+    - ~/Docker/mailpit-data:/data
+    environment:
+      MP_DATABASE: /data/mailpit.db  # save emails to file
+    networks:
+      - app_network
+
+  nfs-server:
+    image: itsthenetwork/nfs-server-alpine
+    container_name: nfs-server
+    privileged: true
+    environment:
+      - SHARED_DIRECTORY=/nfsshare
+    volumes:
+      - /home/ranjan/Docker/nfsshare:/nfsshare   # Host folder mount
+    ports:
+      - "2049:2049"                    # NFS port
+    networks:
+      - app_network
+    profiles: ["manual"]               # only start when explicitly requested
+
+  nfs-nginx:
+    image: nginx:alpine
+    container_name: nfs-nginx
+    ports:
+      - "7080:80"  # Map container port 80 to host 7080
+    volumes:
+      - /home/ranjan/Docker/nfsshare:/usr/share/nginx/html:ro
+    networks:
+      - app_network
+    profiles: ["manual"]               # only start when explicitly requested
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: redis-commander
+    ports:
+      - "8081:8081"  # Web UI port
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    depends_on:
+      - redis
+    networks:
+      - app_network
+
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  redis_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+  postgres_data:
+    driver: local
+  mysql_workbench_data:
+    driver: local
+  jenkins_data:
+      driver: local
