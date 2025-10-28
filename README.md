@@ -1,6 +1,11 @@
-# DevOps & Dev Environment Docker Setup
+# Ranjan Adhikari's DevOps & Dev Environment Docker Setup
 
 This repository contains a Docker Compose setup for a comprehensive development and testing environment. It includes commonly used services such as Redis, Kafka, RabbitMQ, Jenkins, MySQL, Mailpit, NFS, and related tools.
+
+---
+
+## Website
+Check out more about me and my projects: [https://ranjan.fyi](https://ranjan.fyi)
 
 ---
 
@@ -108,9 +113,3 @@ This repository contains a Docker Compose setup for a comprehensive development 
 ### Start All Services
 ```bash
 docker-compose up -d
-
-
-
-
-## Website
-Check out more about me and my projects: [https://ranjan.fyi](https://ranjan.fyi)
