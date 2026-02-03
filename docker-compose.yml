@@ -88,12 +88,12 @@ services:
     image: axllent/mailpit:latest
     container_name: mailpit
     ports:
-      - "1025:1025"   # SMTP port
-      - "8025:8025"   # Web UI port
+      - "1025:1025"
+      - "8025:8025"
     volumes:
-    - ~/Docker/mailpit-data:/data
+      - /home/ranjan/Docker/mailpit-data:/data
     environment:
-      MP_DATABASE: /data/mailpit.db  # save emails to file
+      MP_DATABASE: /data/mailpit.db
     networks:
       - app_network
 
