@@ -1,13 +1,26 @@
 services:
-  redis:
-    image: redis:latest
-    container_name: redis
+  # redis:
+  #   image: redis:latest
+  #   container_name: redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   networks:
+  #     - app_network
+
+  dragonfly:
+    image: 'docker.dragonflydb.io/dragonflydb/dragonfly'
+    ulimits:
+      memlock: -1
     ports:
       - "6379:6379"
     volumes:
-      - redis_data:/data
+      - dragonflydata:/data
+    command: ["--proactor_threads=3"]  # reduce threads to fit memory
     networks:
       - app_network
+
 
   zookeeper:
     image: zookeeper:3.7
@@ -128,9 +141,9 @@ services:
     ports:
       - "8081:8081"  # Web UI port
     environment:
-      - REDIS_HOSTS=local:redis:6379
+      - REDIS_HOSTS=local:dragonfly:6379
     depends_on:
-      - redis
+      - dragonfly
     networks:
       - app_network
 
@@ -150,3 +163,5 @@ volumes:
     driver: local
   jenkins_data:
       driver: local
+  dragonflydata:
+    driver: local
