@@ -17,7 +17,10 @@ services:
       - "6379:6379"
     volumes:
       - dragonflydata:/data
-    command: ["--proactor_threads=3"]  # reduce threads to fit memory
+    command: [
+      "--default_lua_flags=allow-undeclared-keys",  # allow dynamic keys
+      "--proactor_threads=3"                        # safe for low memory
+    ]
     networks:
       - app_network
 
