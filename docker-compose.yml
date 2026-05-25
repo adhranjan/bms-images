@@ -107,7 +107,7 @@ services:
       - "1025:1025"
       - "8025:8025"
     volumes:
-      - /home/ranjan/Docker/mailpit-data:/data
+    - /home/ranjan/Docker/mailpit-data:/data:Z
     environment:
       MP_DATABASE: /data/mailpit.db
     networks:
